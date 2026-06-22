@@ -9,97 +9,96 @@ import {
 // ============================================================
 // KONFIGURASI — SESUAIKAN DENGAN HIVEMQ KAMU
 // ============================================================
-const MQTT_HOST     = '511fe9a7fee54db288deaa763f691cc5.s1.eu.hivemq.cloud' // ganti!
+const MQTT_HOST     = '511fe9a7fee54db288deaa763f691cc5.s1.eu.hivemq.cloud' 
 const MQTT_PORT     = 8884
-const MQTT_USERNAME = 'esp32user'   // ganti!
-const MQTT_PASSWORD = 'Password123' // ganti!
-const MQTT_TOPIC    = 'Smart Home'
+const MQTT_USERNAME = 'esp32user'   
+const MQTT_PASSWORD = 'Password123' 
+const MQTT_TOPIC    = 'Smart Home' // Pastikan sesuai
 // ============================================================
 
 // ── Gauge Setengah Lingkaran ─────────────────────────────────
-// ── Gauge Setengah Lingkaran (Diperbarui) ────────────────────
-function GaugeCard({ label, value, unit, min, max, color }) {
+function GaugeCard({ label, value, unit, min, max, color, isDark }) {
   const safeValue = value !== null && value !== undefined ? Number(value) : null
   
-  // Hitung persentase riil (0 sampai 100)
   const pct = safeValue !== null
     ? Math.min(Math.max(((safeValue - min) / (max - min)) * 100, 0), 100)
     : 0
 
   const r = 65, cx = 90, cy = 88
-  
-  // Menggunakan circumference (keliling) untuk SVG dash array (lebih presisi & anti-bug)
   const circumference = Math.PI * r
   const dashoffset = circumference - (pct / 100) * circumference
 
   const colorMap = {
     blue: '#38bdf8', green: '#4ade80', yellow: '#facc15', red: '#f87171'
   }
-  const stroke = colorMap[color] || '#38bdf8'
+  const strokeColor = colorMap[color] || '#38bdf8'
   const glowId = `glow-${label}`
 
   return (
-    <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex flex-col items-center">
-      <span className="text-gray-400 text-xs font-semibold tracking-widest uppercase mb-1">
+    <div className={`rounded-2xl p-4 border flex flex-col items-center transition-colors duration-300 ${
+      isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200 shadow-sm'
+    }`}>
+      <span className={`text-xs font-semibold tracking-widest uppercase mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
         {label}
       </span>
       <svg width="180" height="115" viewBox="0 0 180 115">
         <defs>
           <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feGaussianBlur stdDeviation={isDark ? "3" : "1.5"} result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
         </defs>
         
-        {/* Track (Latar Belakang Arc) */}
+        {/* Track Latar Belakang */}
         <path
           d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
-          fill="none" stroke="#1f2937" strokeWidth="10" strokeLinecap="round"
+          fill="none" 
+          stroke={isDark ? "#1f2937" : "#e5e7eb"} 
+          strokeWidth="10" strokeLinecap="round"
         />
         
-        {/* Arc Berwarna (Berdasarkan Nilai Aktual) */}
+        {/* Arc Berwarna */}
         {safeValue !== null && pct > 0 && (
           <path
             d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
             fill="none" 
-            stroke={stroke} 
+            stroke={strokeColor} 
             strokeWidth="10"
             strokeLinecap="round" 
             filter={`url(#${glowId})`}
             strokeDasharray={circumference}
             strokeDashoffset={dashoffset}
-            className="transition-all duration-500 ease-in-out" // Tambahan animasi agar pergerakan smooth
+            className="transition-all duration-500 ease-in-out"
           />
         )}
         
-        {/* Teks Nilai */}
-        <text x={cx} y={cy - 6} textAnchor="middle" fill="white"
+        <text x={cx} y={cy - 6} textAnchor="middle" fill={isDark ? "white" : "#111827"}
           fontSize="26" fontWeight="700" fontFamily="monospace">
           {safeValue !== null ? safeValue : '—'}
         </text>
         
-        {/* Satuan */}
         <text x={cx} y={cy + 16} textAnchor="middle"
-          fill="#6b7280" fontSize="13" fontWeight="500">
+          fill={isDark ? "#6b7280" : "#9ca3af"} fontSize="13" fontWeight="500">
           {unit}
         </text>
         
-        {/* Teks Min Max */}
         <text x={cx - r + 6} y={cy + 22} textAnchor="middle"
-          fill="#374151" fontSize="9">{min}</text>
+          fill={isDark ? "#374151" : "#d1d5db"} fontSize="9">{min}</text>
         <text x={cx + r - 6} y={cy + 22} textAnchor="middle"
-          fill="#374151" fontSize="9">{max}</text>
+          fill={isDark ? "#374151" : "#d1d5db"} fontSize="9">{max}</text>
       </svg>
     </div>
   )
 }
 
 // ── Kartu Stat ───────────────────────────────────────────────
-function StatCard({ label, value, unit, colorClass, icon, sub }) {
+function StatCard({ label, value, unit, colorClass, icon, sub, isDark }) {
   return (
-    <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 flex flex-col gap-1">
+    <div className={`rounded-2xl p-5 border flex flex-col gap-1 transition-colors duration-300 ${
+      isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200 shadow-sm'
+    }`}>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-gray-500 text-xs font-semibold tracking-widest uppercase">
+        <span className={`text-xs font-semibold tracking-widest uppercase ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
           {label}
         </span>
         <span className="text-xl">{icon}</span>
@@ -108,7 +107,7 @@ function StatCard({ label, value, unit, colorClass, icon, sub }) {
         <span className={`text-3xl font-bold font-mono ${colorClass}`}>
           {value ?? '—'}
         </span>
-        {unit && <span className="text-gray-500 text-sm mb-1">{unit}</span>}
+        {unit && <span className={`text-sm mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{unit}</span>}
       </div>
       {sub && <span className="text-gray-600 text-xs mt-1">{sub}</span>}
     </div>
@@ -116,7 +115,7 @@ function StatCard({ label, value, unit, colorClass, icon, sub }) {
 }
 
 // ── Badge Status ─────────────────────────────────────────────
-function StatusBadge({ status }) {
+function StatusBadge({ status, isDark }) {
   const config = {
     connecting: { color: 'bg-yellow-500', text: 'Menghubungkan...', pulse: true },
     online:     { color: 'bg-green-400',  text: 'Online',           pulse: true },
@@ -124,24 +123,27 @@ function StatusBadge({ status }) {
   }
   const c = config[status] || config.connecting
   return (
-    <div className="flex items-center gap-2">
-      <span className={`w-2.5 h-2.5 rounded-full ${c.color} ${c.pulse ? 'animate-pulse' : ''}`} />
-      <span className={`text-sm font-medium ${
-        status === 'online' ? 'text-green-400' :
-        status === 'offline' ? 'text-red-400' : 'text-yellow-400'
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200 shadow-sm'}`}>
+      <span className={`w-2 h-2 rounded-full ${c.color} ${c.pulse ? 'animate-pulse' : ''}`} />
+      <span className={`text-xs font-medium ${
+        status === 'online' ? (isDark ? 'text-green-400' : 'text-green-600') :
+        status === 'offline' ? (isDark ? 'text-red-400' : 'text-red-600') : 
+        (isDark ? 'text-yellow-400' : 'text-yellow-600')
       }`}>{c.text}</span>
     </div>
   )
 }
 
 // ── Custom Tooltip Chart ─────────────────────────────────────
-function CustomTooltip({ active, payload, label }) {
+function CustomTooltip({ active, payload, label, isDark }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-xs">
-      <p className="text-gray-400 mb-1">{label}</p>
+    <div className={`border rounded-xl px-3 py-2 text-xs shadow-lg ${
+      isDark ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-600'
+    }`}>
+      <p className="mb-1">{label}</p>
       {payload.map((p, i) => (
-        <p key={i} style={{ color: p.color }} className="font-mono font-bold">
+        <p key={i} style={{ color: isDark ? p.color : '#ca8a04' }} className="font-mono font-bold">
           {p.name}: {p.value} {p.unit}
         </p>
       ))}
@@ -156,14 +158,17 @@ export default function Dashboard() {
   const [status, setStatus]       = useState('connecting')
   const [lastUpdate, setLastUpdate] = useState(null)
   const [msgCount, setMsgCount]   = useState(0)
+  
+  // State untuk Tema (Default: Gelap)
+  const [isDark, setIsDark]       = useState(true) 
   const clientRef = useRef(null)
 
   useEffect(() => {
     let client = null
 
-  import('mqtt').then((mqttLib) => {
-    const mqtt = mqttLib.default || mqttLib
-    client = mqtt.connect(`wss://${MQTT_HOST}:${MQTT_PORT}/mqtt`, {
+    import('mqtt').then((mqttLib) => {
+      const mqtt = mqttLib.default || mqttLib
+      client = mqtt.connect(`wss://${MQTT_HOST}:${MQTT_PORT}/mqtt`, {
         username: MQTT_USERNAME,
         password: MQTT_PASSWORD,
         clientId: 'dashboard-' + Math.random().toString(16).slice(2),
@@ -213,37 +218,52 @@ export default function Dashboard() {
     })
 
     return () => {
-      if (clientRef.current) {
-        clientRef.current.end()
-      }
+      if (clientRef.current) clientRef.current.end()
     }
   }, [])
 
   const round = (v, d = 2) =>
     v !== null && v !== undefined ? Number(Number(v).toFixed(d)) : null
 
-
-const energiKwh = data?.energi ?? 0
-const biayaStr  = data?.biaya != null
-  ? Math.round(data.biaya).toLocaleString('id-ID')
-  : null
+  const biayaStr  = data?.biaya != null
+    ? Math.round(data.biaya).toLocaleString('id-ID')
+    : null
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
+    <div className={`min-h-screen p-4 md:p-8 transition-colors duration-500 ${
+      isDark ? 'bg-gray-950 text-white' : 'bg-gray-50 text-gray-900'
+    }`}>
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            ⚡ Monitoring Listrik Kamar Kos
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+            <img src="/Logo.png" alt="Logo Kumitika" className="h-10 w-auto" />
+            Monitoring Listrik Kamar Kos
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
             Real-time via MQTT · {MQTT_TOPIC}
           </p>
         </div>
-        <div className="flex flex-col items-start md:items-end gap-1">
-          <StatusBadge status={status} />
-          <div className="flex gap-3 text-xs text-gray-600">
+        
+        <div className="flex flex-col items-start md:items-end gap-3">
+          <div className="flex items-center gap-3">
+            <StatusBadge status={status} isDark={isDark} />
+            
+            {/* Tombol Toggle Tema */}
+            <button 
+              onClick={() => setIsDark(!isDark)}
+              className={`p-2 rounded-full transition-colors border ${
+                isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-700 text-yellow-400' 
+                       : 'bg-white hover:bg-gray-100 border-gray-300 text-blue-600 shadow-sm'
+              }`}
+              title="Ganti Tema"
+            >
+              {isDark ? '☀️' : '🌙'}
+            </button>
+          </div>
+
+          <div className={`flex gap-3 text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
             {lastUpdate && (
               <span>Update: {lastUpdate.toLocaleTimeString('id-ID')}</span>
             )}
@@ -256,15 +276,15 @@ const biayaStr  = data?.biaya != null
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <GaugeCard
           label="Tegangan" value={round(data?.tegangan, 1)}
-          unit="V" min={180} max={260} color="blue"
+          unit="V" min={180} max={260} color="blue" isDark={isDark}
         />
         <GaugeCard
           label="Arus" value={round(data?.arus, 3)}
-          unit="A" min={0} max={4} color="green"
+          unit="A" min={0} max={4} color="green" isDark={isDark}
         />
         <GaugeCard
           label="Daya" value={round(data?.daya, 1)}
-          unit="W" min={0} max={900} color="yellow"
+          unit="W" min={0} max={900} color="yellow" isDark={isDark}
         />
       </div>
 
@@ -274,46 +294,50 @@ const biayaStr  = data?.biaya != null
           label="Total Energi"
           value={round(data?.energi, 4)}
           unit="kWh"
-          colorClass="text-blue-400"
+          colorClass={isDark ? "text-blue-400" : "text-blue-600"}
           icon="🔋"
+          isDark={isDark}
         />
         <StatCard
           label="Estimasi Tagihan"
           value={biayaStr ? `Rp ${biayaStr}` : '—'}
           unit=""
-          colorClass="text-yellow-400"
+          colorClass={isDark ? "text-yellow-400" : "text-yellow-600"}
           icon="💰"
+          isDark={isDark}
         />
       </div>
 
       {/* Grafik Daya */}
-      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 mb-4">
+      <div className={`rounded-2xl p-5 border mb-4 transition-colors duration-300 ${
+        isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200 shadow-sm'
+      }`}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-gray-300 font-semibold text-sm">
+          <h2 className={`font-semibold text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
             📈 Grafik Daya Real-time
           </h2>
-          <span className="text-gray-600 text-xs">30 data terakhir</span>
+          <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>30 data terakhir</span>
         </div>
         {history.length === 0 ? (
-          <div className="flex items-center justify-center h-40 text-gray-600 text-sm">
+          <div className={`flex items-center justify-center h-40 text-sm ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
             Menunggu data dari ESP32...
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={history}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="time" tick={{ fill: '#4b5563', fontSize: 9 }}
+              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1f2937" : "#e5e7eb"} />
+              <XAxis dataKey="time" tick={{ fill: isDark ? '#4b5563' : '#9ca3af', fontSize: 9 }}
                 interval="preserveStartEnd" />
-              <YAxis tick={{ fill: '#4b5563', fontSize: 10 }} unit=" W" />
-              <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="daya" stroke="#facc15"
+              <YAxis tick={{ fill: isDark ? '#4b5563' : '#9ca3af', fontSize: 10 }} unit=" W" />
+              <Tooltip content={<CustomTooltip isDark={isDark} />} />
+              <Line type="monotone" dataKey="daya" stroke={isDark ? "#facc15" : "#ca8a04"}
                 strokeWidth={2} dot={false} name="Daya" unit="W" />
             </LineChart>
           </ResponsiveContainer>
         )}
       </div>
 
-      <p className="text-center text-gray-700 text-xs mt-6">
+      <p className={`text-center text-xs mt-6 ${isDark ? 'text-gray-700' : 'text-gray-400'}`}>
         Capstone Design Project · Teknik Elektro · {new Date().getFullYear()}
       </p>
     </div>

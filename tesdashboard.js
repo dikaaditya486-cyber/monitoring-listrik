@@ -1,10 +1,10 @@
 const mqtt = require('mqtt')
 
 // Sesuaikan dengan konfigurasi kamu
-const MQTT_HOST     = '511fe9a7fee54db288deaa763f691cc5.s1.eu.hivemq.cloud' // ganti!
-const MQTT_USERNAME = 'esp32user'   // ganti!
-const MQTT_PASSWORD = 'Password123' // ganti!
-const MQTT_TOPIC    = 'listrik/rumah'
+const MQTT_HOST     = '511fe9a7fee54db288deaa763f691cc5.s1.eu.hivemq.cloud'
+const MQTT_USERNAME = 'esp32user'  
+const MQTT_PASSWORD = 'Password123' 
+const MQTT_TOPIC    = 'Smart Home' // Pastikan ini sama dengan di dashboard ya
 
 const client = mqtt.connect(`mqtts://${MQTT_HOST}:8883`, {
   username: MQTT_USERNAME,
@@ -14,6 +14,9 @@ const client = mqtt.connect(`mqtts://${MQTT_HOST}:8883`, {
 client.on('connect', () => {
   console.log('Terhubung ke HiveMQ!')
   let count = 0
+
+  // Tarif dasar listrik PLN (contoh: Golongan R-1/TR 1300 VA)
+  const TARIF_PER_KWH = 1000
 
   const interval = setInterval(() => {
     count++
@@ -25,8 +28,13 @@ client.on('connect', () => {
     const energi    = +(0.05 + count * 0.001).toFixed(3)
     const frekuensi = +(49.8 + Math.random() * 0.4).toFixed(1)
     const pf        = +(0.82 + Math.random() * 0.08).toFixed(2)
+    
+    // Menghitung estimasi tagihan listrik (Energi kWh * Tarif Dasar)
+    // Dibulatkan ke angka 0 desimal agar pas jadi format Rupiah
+    const biaya     = +(energi * TARIF_PER_KWH).toFixed(0)
 
-    const payload = JSON.stringify({ tegangan, arus, daya, energi, frekuensi, pf })
+    // Tambahkan 'biaya' ke dalam payload JSON yang dikirim
+    const payload = JSON.stringify({ tegangan, arus, daya, energi, frekuensi, pf, biaya })
 
     client.publish(MQTT_TOPIC, payload)
     console.log(`[${count}/100] ${payload}`)
@@ -36,7 +44,7 @@ client.on('connect', () => {
       client.end()
       console.log('\n✅ Selesai! 100 data terkirim.')
     }
-  }, 1000) // kirim tiap 0.5 detik
+  }, 1000) // kirim tiap 1 detik
 })
 
 client.on('error', (err) => {
